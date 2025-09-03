@@ -136,7 +136,12 @@ export async function syncGoogleCalendarToBookings(options?: { calendarId?: stri
     }
   } catch {}
 
-  const { calendar } = getGoogleClients();
+  const clients = getGoogleClients();
+  if (!clients) {
+    console.info('Google Calendar sync skipped: no credentials available');
+    return { scanned: 0, created: 0, disabled: true, message: 'Google Calendar not configured' } as any;
+  }
+  const { calendar } = clients;
   const calendarId = options?.calendarId || 'primary';
 
   // Default window: from config syncWindowDays
