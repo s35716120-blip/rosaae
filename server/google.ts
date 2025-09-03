@@ -7,32 +7,64 @@ export type GoogleClients = {
 };
 
 function loadCredentials() {
-  if (!fs.existsSync('credentials.json')) {
-    return null;
+  // First try to load from file
+  if (fs.existsSync('credentials.json')) {
+    try {
+      const raw = fs.readFileSync('credentials.json', 'utf8');
+      const parsed = JSON.parse(raw);
+      const conf = parsed.installed ?? parsed.web;
+      if (!conf) throw new Error('Invalid credentials.json: expected "installed" or "web" root');
+      return conf;
+    } catch (error) {
+      console.warn('Failed to load Google credentials from file:', error);
+    }
   }
-  try {
-    const raw = fs.readFileSync('credentials.json', 'utf8');
-    const parsed = JSON.parse(raw);
-    const conf = parsed.installed ?? parsed.web;
-    if (!conf) throw new Error('Invalid credentials.json: expected "installed" or "web" root');
-    return conf;
-  } catch (error) {
-    console.warn('Failed to load Google credentials:', error);
-    return null;
+
+  // Fallback to environment variables
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.PUBLIC_BASE_URL || 'http://localhost:5000'}/api/webhooks/booking`;
+
+  if (clientId && clientSecret) {
+    return {
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uris: [redirectUri]
+    };
   }
+
+  console.info('Google credentials not found in file or environment variables');
+  return null;
 }
 
 function loadToken() {
-  if (!fs.existsSync('token.json')) {
-    return null;
+  // First try to load from file
+  if (fs.existsSync('token.json')) {
+    try {
+      const raw = fs.readFileSync('token.json', 'utf8');
+      return JSON.parse(raw);
+    } catch (error) {
+      console.warn('Failed to load Google token from file:', error);
+    }
   }
-  try {
-    const raw = fs.readFileSync('token.json', 'utf8');
-    return JSON.parse(raw);
-  } catch (error) {
-    console.warn('Failed to load Google token:', error);
-    return null;
+
+  // Fallback to environment variables
+  const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  const tokenType = process.env.GOOGLE_TOKEN_TYPE || 'Bearer';
+  const expiryDate = process.env.GOOGLE_TOKEN_EXPIRY_DATE;
+
+  if (accessToken && refreshToken) {
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_type: tokenType,
+      expiry_date: expiryDate ? parseInt(expiryDate) : undefined
+    };
   }
+
+  console.info('Google token not found in file or environment variables');
+  return null;
 }
 
 export function getGoogleClients(): GoogleClients | null {
