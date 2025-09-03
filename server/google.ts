@@ -25,6 +25,13 @@ function loadCredentials() {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.PUBLIC_BASE_URL || 'http://localhost:5000'}/api/webhooks/booking`;
 
+  console.log('[DEBUG] Google credentials check:', {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    clientIdLength: clientId ? clientId.length : 0,
+    redirectUri
+  });
+
   if (clientId && clientSecret) {
     return {
       client_id: clientId,
@@ -53,6 +60,13 @@ function loadToken() {
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
   const tokenType = process.env.GOOGLE_TOKEN_TYPE || 'Bearer';
   const expiryDate = process.env.GOOGLE_TOKEN_EXPIRY_DATE;
+
+  console.log('[DEBUG] Google token check:', {
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
+    tokenType,
+    expiryDate
+  });
 
   if (accessToken && refreshToken) {
     return {
